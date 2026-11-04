@@ -12,6 +12,7 @@ Examples:
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -58,7 +59,25 @@ def send_image(
         resp = requests.post(url, data=data, files=files, timeout=60)
 
     resp.raise_for_status()
-    return resp.json()
+    task = resp.json()
+    task_id = task["task_id"]
+    for _ in range(120):
+        status_resp = requests.get(f"{base_url}/tasks/{task_id}", timeout=10)
+        status_resp.raise_for_status()
+        task = status_resp.json()
+        if task["status"] in {"completed", "failed"}:
+            break
+        time.sleep(0.25)
+    if task["status"] != "completed":
+        raise RuntimeError(task.get("error", "Task did not complete"))
+
+    result_path = Path("outputs") / task["result_filename"]
+    result_resp = requests.get(f"{base_url}{task['result_url']}", timeout=60)
+    result_resp.raise_for_status()
+    result_path.parent.mkdir(exist_ok=True)
+    result_path.write_bytes(result_resp.content)
+    task["local_result_path"] = str(result_path)
+    return task
 
 
 def main() -> None:
@@ -83,7 +102,7 @@ def main() -> None:
     print(f"\nUploading '{args.image.name}' with operation '{args.operation}'...")
     try:
         result = send_image(args.image, args.operation, base_url, args.width, args.height, args.quality)
-    except requests.HTTPError as exc:
+    except (requests.HTTPError, RuntimeError) as exc:
         print(f"ERROR: {exc}")
         if exc.response is not None:
             print(f"  Response: {exc.response.text}")
@@ -93,7 +112,7 @@ def main() -> None:
     for key, value in result.items():
         print(f"  {key}: {value}")
     print("-----------------------")
-    print(f"\nResult saved to: outputs/{result['result_filename']}")
+    print(f"\nResult downloaded to: {result['local_result_path']}")
 
 
 if __name__ == "__main__":

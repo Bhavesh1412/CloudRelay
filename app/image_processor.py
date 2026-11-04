@@ -1,3 +1,4 @@
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -22,11 +23,10 @@ def grayscale(image: Image.Image) -> Image.Image:
 
 def compress(image: Image.Image, quality: int | None = None) -> Image.Image:
     q = quality or DEFAULT_COMPRESS_QUALITY
-    buffer = image.copy()
-    buffer = buffer.convert("RGB")
-    temp_path = Path(__file__).resolve().parent.parent / "_temp_compress.jpg"
-    buffer.save(temp_path, quality=q)
-    return Image.open(temp_path)
+    buffer = BytesIO()
+    image.convert("RGB").save(buffer, format="JPEG", quality=q)
+    buffer.seek(0)
+    return Image.open(buffer).copy()
 
 
 def edge_detection(image: Image.Image) -> Image.Image:

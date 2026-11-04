@@ -6,14 +6,15 @@ Build a local distributed task-offloading system that simulates a client with li
 
 ## Current Phase
 
-**Phase 1** - Project foundation and working single-server baseline.
+**Phase 2** - Asynchronous task processing with status polling and result downloads.
 
 ## Completed Work
 
 - Project structure created from scratch (empty workspace)
-- FastAPI server with two endpoints: `GET /health` and `POST /process-image`
+- FastAPI server with `GET /health`, `POST /process-image`, `GET /tasks/{task_id}`, and `GET /tasks/{task_id}/result`
 - Image processing module supporting 4 operations: resize, grayscale, compress, edge_detection
 - Input validation for file type and operation name
+- In-memory task tracking and a four-worker thread pool
 - File-based result storage in `outputs/` directory
 - CLI client script with argparse for all operations
 - 9 automated pytest tests (all passing)
@@ -27,7 +28,9 @@ Build a local distributed task-offloading system that simulates a client with li
 ```
 Client (CLI)
     |
-FastAPI Server (single synchronous worker)
+FastAPI Server (async task submission)
+    |
+In-memory task manager / worker pool
     |
 Image processing (Pillow)
     |
@@ -108,13 +111,12 @@ All 4 operations successfully tested end-to-end:
 
 ## Planned Future Phases
 
-1. **Phase 2:** Asynchronous task processing with status polling endpoint
-2. **Phase 3:** Redis + Celery task queue integration
-3. **Phase 4:** Multiple worker processes / Docker containers
-4. **Phase 5:** Load balancing across workers
-6. **Phase 6:** Processing-time comparison (local vs server)
-7. **Phase 7:** Dashboard showing worker activity and performance
-8. **Phase 8:** Authentication, deployment, monitoring
+1. **Phase 3:** Redis + Celery task queue integration
+2. **Phase 4:** Multiple worker processes / Docker containers
+3. **Phase 5:** Load balancing across workers
+4. **Phase 6:** Processing-time comparison (local vs server)
+5. **Phase 7:** Dashboard showing worker activity and performance
+6. **Phase 8:** Authentication, deployment, monitoring
 
 ## Important Assumptions
 

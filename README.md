@@ -29,20 +29,20 @@ Result storage
 Client downloads the result
 ```
 
-Phase 1 implements only the client and a synchronous single-server baseline.
+Phase 2 adds asynchronous task submission, status polling, and result downloads.
 
-## Phase 1 - What is Included
+## Current Product - Phase 2
 
-- FastAPI server with `/health` and `/process-image` endpoints
+- FastAPI server with `/health`, `/process-image`, `/tasks/{task_id}`, and `/tasks/{task_id}/result` endpoints
 - Image processing operations: resize, grayscale, compress, edge detection
 - Input validation (file type, operation name)
 - A Python client script for uploading images via CLI
 - Automated tests for all endpoints
-- Simple file-based result storage (`outputs/` directory)
+- In-memory task tracking with a four-worker thread pool
+- Simple file-based upload and result storage (`uploads/` and `outputs/` directories)
 
 ## Future Phases
 
-- **Phase 2:** Asynchronous task processing with status polling
 - **Phase 3:** Redis + Celery task queue
 - **Phase 4:** Multiple worker processes / Docker containers
 - **Phase 5:** Load balancing across workers
@@ -91,6 +91,16 @@ python -m client.client photo.png edge_detection
 ```
 
 Processed images are saved to the `outputs/` directory.
+
+The API now returns `202 Accepted` immediately with a `task_id`. Poll the task until
+its status is `completed`, then download the result from the returned `result_url`.
+
+```bash
+curl -X POST http://127.0.0.1:8000/process-image \
+  -F "file=@photo.jpg" -F "operation=grayscale"
+curl http://127.0.0.1:8000/tasks/<task_id>
+curl -OJ http://127.0.0.1:8000/tasks/<task_id>/result
+```
 
 ## Running Tests
 
