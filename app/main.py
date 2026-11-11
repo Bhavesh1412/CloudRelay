@@ -15,7 +15,7 @@ app = FastAPI(
 
 
 @app.get("/health")
-def health_check() -> dict[str, str]:
+async def health_check() -> dict[str, str]:
     return {"status": "healthy", "version": "0.2.0", "phase": "2"}
 
 
@@ -47,7 +47,7 @@ async def process_image_endpoint(
 
 
 @app.get("/tasks/{task_id}")
-def task_status(task_id: str) -> dict:
+async def task_status(task_id: str) -> dict:
     task = get_task(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -55,7 +55,7 @@ def task_status(task_id: str) -> dict:
 
 
 @app.get("/tasks/{task_id}/result")
-def task_result(task_id: str) -> FileResponse:
+async def task_result(task_id: str) -> FileResponse:
     task = get_task_internal(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
